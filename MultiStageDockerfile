@@ -1,18 +1,19 @@
-#git
-FROM alpine/git as repo
-
-MAINTAINER mylandmarktech@gmail.com
-
+# Stage 1: Clone repo
+FROM alpine/git AS repo
 WORKDIR /app
-RUN git clone https://github.com/LandmakTechnology/maven-web-application.git
+RUN git clone https://github.com/evabasung/maven-new-web-app.git
 
-#Maven
-FROM maven:3.5-jdk-8-alpine as build
+
+# Stage 2: Build project clone project directory to /app
+FROM maven:3.5-jdk-8-alpine AS build
 WORKDIR /app
-COPY --from=repo /app/maven-web-application  /app
-RUN mvn install
+COPY --from=repo /app/maven-new-web-app /app
+RUN mvn clean package                         #build and get the articact .war
 
-#Tomcat
-FROM tomcat:8.0.20-jre8
-#COPY  /app/target/*war /usr/local/tomcat/webapps/maven-web-app.war
-COPY --from=build /app/target/*war /usr/local/tomcat/webapps/
+
+# Stage 3: Run on Tomcat 
+FROM tomcat:9.0-jdk11-temurin
+
+RUN rm -rf /usr/local/tomcat/webapps/*      #clean deployment diretory
+
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/myapp.war   # copy .war to to webapps working directory
